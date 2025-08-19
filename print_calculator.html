@@ -221,13 +221,21 @@
             color: #374151;
         }
 
+        .total-summary {
+            display: flex;
+            align-items: stretch;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
         .total-price {
             background: linear-gradient(135deg, #4c51bf 0%, #553c9a 100%);
             color: white;
             padding: 20px;
             border-radius: 16px;
             text-align: center;
-            margin-top: 20px;
+            flex: 1;
         }
 
         .total-price .label {
@@ -239,6 +247,35 @@
         .total-price .amount {
             font-size: 2.5rem;
             font-weight: 900;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-height: 100%;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+        }
+
+        .export-btn:active {
+            transform: translateY(0);
         }
 
         .hidden {
@@ -391,6 +428,16 @@
 
             .print-type-card {
                 padding: 25px 15px;
+            }
+
+            .total-summary {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .export-btn {
+                width: 100%;
+                justify-content: center;
             }
         }
     </style>
@@ -661,9 +708,14 @@
             <div id="results" class="results hidden">
                 <h3>Price Breakdown</h3>
                 <div class="price-breakdown" id="priceBreakdown"></div>
-                <div class="total-price">
-                    <div class="label">Total Price</div>
-                    <div class="amount" id="totalAmount">$0.00</div>
+                <div class="total-summary">
+                    <div class="total-price">
+                        <div class="label">Total Price</div>
+                        <div class="amount" id="totalAmount">$0.00</div>
+                    </div>
+                    <button class="export-btn" onclick="exportToCSV()">
+                        📊 Export to CSV
+                    </button>
                 </div>
             </div>
         </div>
@@ -804,6 +856,7 @@
         // Global variables to track selections
         let selectedPrintType = '';
         let selectedSheetFormat = '';
+        let lastCalculationData = null;
 
         // Form submission
         form.addEventListener('submit', function(e) {
@@ -884,8 +937,9 @@
             // Calculate total
             const total = afterDiscount + deliveryPrice;
 
-            // Display results
-            displayResults({
+            // Store calculation data for export
+            lastCalculationData = {
+                printType: 'Large Format Printing',
                 formatName: formatData.name,
                 materialName: materialData.name,
                 paperWeightName: paperWeightData.name,
@@ -904,7 +958,10 @@
                 discountAmount,
                 deliveryPrice,
                 total
-            });
+            };
+
+            // Display results
+            displayResults(lastCalculationData);
         }
 
         function calculateBusinessCardPrice() {
@@ -964,8 +1021,9 @@
             // Calculate total
             const total = afterDiscount + deliveryPrice;
 
-            // Display results
-            displayBusinessCardResults({
+            // Store calculation data for export
+            lastCalculationData = {
+                printType: 'Business Cards',
                 shapeName: shapeData.name,
                 formatName: formatData.name,
                 roundedCornersName: roundedCornersData.name,
@@ -981,7 +1039,10 @@
                 discountAmount,
                 deliveryPrice,
                 total
-            });
+            };
+
+            // Display results
+            displayBusinessCardResults(lastCalculationData);
         }
 
         function displayResults(calc) {
@@ -1273,6 +1334,115 @@
                 variations.value = maxVariations;
             }
         });
+
+        // CSV Export Function
+        function exportToCSV() {
+            if (!lastCalculationData) {
+                alert('No calculation data to export. Please calculate a price first.');
+                return;
+            }
+
+            const data = lastCalculationData;
+            const currentDate = new Date().toLocaleDateString();
+            const currentTime = new Date().toLocaleTimeString();
+
+            let csvContent = '';
+            
+            // Header
+            csvContent += 'Professional Printing Calculator - Quote Export\n';
+            csvContent += `Generated on: ${currentDate} at ${currentTime}\n\n`;
+            
+            // Quote Summary
+            csvContent += 'QUOTE SUMMARY\n';
+            csvContent += 'Field,Value\n';
+            csvContent += `Print Type,"${data.printType}"\n`;
+            
+            if (data.printType === 'Large Format Printing') {
+                csvContent += `Format,"${data.formatName}"\n`;
+                csvContent += `Material,"${data.materialName}"\n`;
+                csvContent += `Paper Weight,"${data.paperWeightName}"\n`;
+                csvContent += `Lamination,"${data.laminationName}"\n`;
+                csvContent += `Board,"${data.stickerBoardName}"\n`;
+                csvContent += `Quantity,${data.quantity}\n`;
+                if (data.variations > 0) {
+                    csvContent += `Variations,${data.variations}\n`;
+                }
+            } else if (data.printType === 'Business Cards') {
+                csvContent += `Shape,"${data.shapeName}"\n`;
+                csvContent += `Format,"${data.formatName}"\n`;
+                csvContent += `Rounded Corners,"${data.roundedCornersName}"\n`;
+                csvContent += `Paper Type,"${data.paperTypeName}"\n`;
+                csvContent += `Paper Weight,"${data.paperWeightName}"\n`;
+                csvContent += `Print CMYK,"${data.cmykName}"\n`;
+                csvContent += `Lamination,"${data.laminationName}"\n`;
+                csvContent += `Quantity,${data.quantity}\n`;
+            }
+            
+            csvContent += `Delivery,"${data.deliveryName}"\n\n`;
+            
+            // Price Breakdown
+            csvContent += 'PRICE BREAKDOWN\n';
+            csvContent += 'Item,Amount\n';
+            
+            if (data.printType === 'Large Format Printing') {
+                csvContent += `Base Price per Item,$${data.pricePerItem.toFixed(2)}\n`;
+                if (data.laminationPrice > 0) {
+                    csvContent += `Lamination,$${data.laminationPrice.toFixed(2)}\n`;
+                }
+                if (data.stickerBoardPrice > 0) {
+                    csvContent += `Board,$${data.stickerBoardPrice.toFixed(2)}\n`;
+                }
+                if (data.variations > 0) {
+                    csvContent += `Variation Surcharge,$${data.variationSurcharge.toFixed(2)}\n`;
+                }
+            } else if (data.printType === 'Business Cards') {
+                csvContent += `Price per Card,$${data.pricePerCard.toFixed(4)}\n`;
+            }
+            
+            csvContent += `Subtotal,$${data.subtotal.toFixed(2)}\n`;
+            
+            if (data.discountAmount > 0) {
+                csvContent += `Quantity Discount (${(data.discount * 100).toFixed(0)}%),-$${data.discountAmount.toFixed(2)}\n`;
+            }
+            
+            if (data.deliveryPrice > 0) {
+                csvContent += `Delivery,$${data.deliveryPrice.toFixed(2)}\n`;
+            } else {
+                csvContent += `Delivery,Free\n`;
+            }
+            
+            csvContent += `TOTAL,$${data.total.toFixed(2)}\n\n`;
+            
+            // Individual Items Breakdown
+            csvContent += 'INDIVIDUAL ITEMS BREAKDOWN\n';
+            if (data.printType === 'Large Format Printing') {
+                csvContent += 'Item #,Description,Unit Price,Quantity,Total\n';
+                const regularItems = data.quantity - (data.variations || 0);
+                if (regularItems > 0) {
+                    csvContent += `1,"${data.formatName} - ${data.materialName}",$${data.pricePerItem.toFixed(2)},${regularItems},$${(data.pricePerItem * regularItems).toFixed(2)}\n`;
+                }
+                if (data.variations > 0) {
+                    const variationPricePerItem = data.pricePerItem * 1.1; // 10% extra for variations
+                    csvContent += `2,"${data.formatName} - ${data.materialName} (Variations)",$${variationPricePerItem.toFixed(2)},${data.variations},$${(variationPricePerItem * data.variations).toFixed(2)}\n`;
+                }
+            } else if (data.printType === 'Business Cards') {
+                csvContent += 'Item #,Description,Unit Price,Quantity,Total\n';
+                csvContent += `1,"${data.formatName} Business Cards - ${data.paperTypeName}",$${data.pricePerCard.toFixed(4)},${data.quantity},$${data.subtotal.toFixed(2)}\n`;
+            }
+
+            // Create and download CSV file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `printing_quote_${currentDate.replace(/\//g, '-')}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     </script>
 </body>
 </html>
