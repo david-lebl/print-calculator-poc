@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Large Format Printing Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .calculator-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4c51bf 0%, #553c9a 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .calculator-body {
+            padding: 40px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4c51bf;
+            box-shadow: 0 0 0 3px rgba(76, 81, 191, 0.1);
+        }
+
+        .form-control:hover {
+            border-color: #d1d5db;
+        }
+
+        .number-input {
+            appearance: textfield;
+        }
+
+        .number-input::-webkit-outer-spin-button,
+        .number-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .delivery-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .delivery-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .delivery-option:hover {
+            border-color: #4c51bf;
+            background: #f8fafc;
+        }
+
+        .delivery-option.selected {
+            border-color: #4c51bf;
+            background: rgba(76, 81, 191, 0.05);
+        }
+
+        .delivery-option input[type="radio"] {
+            margin-right: 10px;
+            accent-color: #4c51bf;
+        }
+
+        .delivery-option .delivery-info {
+            flex: 1;
+        }
+
+        .delivery-option .delivery-name {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .delivery-option .delivery-time {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .delivery-option .delivery-price {
+            font-weight: 700;
+            color: #4c51bf;
+            font-size: 1.1rem;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #4c51bf 0%, #553c9a 100%);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 16px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 8px 25px rgba(76, 81, 191, 0.3);
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(76, 81, 191, 0.4);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .results h3 {
+            color: #374151;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .price-breakdown {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .price-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .price-item:last-child {
+            border-bottom: none;
+        }
+
+        .price-item .label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .price-item .value {
+            font-weight: 700;
+            color: #374151;
+        }
+
+        .total-price {
+            background: linear-gradient(135deg, #4c51bf 0%, #553c9a 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .total-price .label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .total-price .amount {
+            font-size: 2.5rem;
+            font-weight: 900;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .delivery-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .calculator-body {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <div class="header">
+            <h1>Large Format Printing Calculator</h1>
+            <p>Get instant pricing for your professional printing needs</p>
+        </div>
+
+        <div class="calculator-body">
+            <form id="printingForm">
+                <div class="form-grid">
+                    <div class="left-column">
+                        <div class="form-group">
+                            <label for="format">Format Size</label>
+                            <select id="format" class="form-control" required>
+                                <option value="">Select format...</option>
+                                <option value="a4">A4 (210×297mm)</option>
+                                <option value="a3">A3 (297×420mm)</option>
+                                <option value="a2">A2 (420×594mm)</option>
+                                <option value="a1">A1 (594×841mm)</option>
+                                <option value="a0">A0 (841×1189mm)</option>
+                                <option value="70x100">70×100cm</option>
+                                <option value="100x140">100×140cm</option>
+                                <option value="custom">Custom Size</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="material">Material Type</label>
+                            <select id="material" class="form-control" required>
+                                <option value="">Select material...</option>
+                                <option value="standard_paper">Standard Paper</option>
+                                <option value="photo_paper">Photo Paper</option>
+                                <option value="canvas">Canvas</option>
+                                <option value="vinyl">Vinyl</option>
+                                <option value="fabric">Fabric</option>
+                                <option value="banner">Banner Material</option>
+                                <option value="backlit">Backlit Film</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="paperWeight">Paper Weight (gsm)</label>
+                            <select id="paperWeight" class="form-control" required>
+                                <option value="">Select weight...</option>
+                                <option value="80">80 gsm - Standard</option>
+                                <option value="120">120 gsm - Medium</option>
+                                <option value="160">160 gsm - Heavy</option>
+                                <option value="200">200 gsm - Premium</option>
+                                <option value="250">250 gsm - Ultra Premium</option>
+                                <option value="300">300 gsm - Cardstock</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="lamination">Lamination</label>
+                            <select id="lamination" class="form-control">
+                                <option value="none">None</option>
+                                <option value="shiny_polymer">Shiny Polymer</option>
+                                <option value="shiny_mat">Shiny Mat</option>
+                                <option value="shiny_monomer">Shiny Monomer</option>
+                                <option value="matte">Matte Lamination</option>
+                                <option value="satin">Satin Lamination</option>
+                                <option value="anti_scratch">Anti-Scratch</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="right-column">
+                        <div class="form-group">
+                            <label for="stickerBoard">Sticker on Board</label>
+                            <select id="stickerBoard" class="form-control">
+                                <option value="none">None</option>
+                                <option value="kapa">Kapa Board</option>
+                                <option value="forex">Forex Board</option>
+                                <option value="dibond">Dibond</option>
+                                <option value="cardboard">Cardboard</option>
+                                <option value="foam_board">Foam Board</option>
+                                <option value="acrylic">Acrylic Board</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="quantity">Number of Items</label>
+                            <input type="number" id="quantity" class="form-control number-input" min="1" max="10000" value="1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="variations">Items with Print Variations</label>
+                            <input type="number" id="variations" class="form-control number-input" min="0" max="10000" value="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Delivery Option</label>
+                            <div class="delivery-options">
+                                <div class="delivery-option" onclick="selectDelivery('standard')">
+                                    <input type="radio" name="delivery" value="standard" id="standard" checked>
+                                    <div class="delivery-info">
+                                        <div class="delivery-name">Standard</div>
+                                        <div class="delivery-time">5-7 business days</div>
+                                    </div>
+                                    <div class="delivery-price">Free</div>
+                                </div>
+                                <div class="delivery-option" onclick="selectDelivery('express')">
+                                    <input type="radio" name="delivery" value="express" id="express">
+                                    <div class="delivery-info">
+                                        <div class="delivery-name">Express</div>
+                                        <div class="delivery-time">2-3 business days</div>
+                                    </div>
+                                    <div class="delivery-price">+$25</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="calculate-btn">Calculate Price</button>
+            </form>
+
+            <div id="results" class="results hidden">
+                <h3>Price Breakdown</h3>
+                <div class="price-breakdown" id="priceBreakdown"></div>
+                <div class="total-price">
+                    <div class="label">Total Price</div>
+                    <div class="amount" id="totalAmount">$0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pricing data structure
+        const pricing = {
+            formats: {
+                a4: { name: 'A4', basePrice: 8, area: 0.062 },
+                a3: { name: 'A3', basePrice: 12, area: 0.125 },
+                a2: { name: 'A2', basePrice: 18, area: 0.25 },
+                a1: { name: 'A1', basePrice: 28, area: 0.5 },
+                a0: { name: 'A0', basePrice: 45, area: 1.0 },
+                '70x100': { name: '70×100cm', basePrice: 35, area: 0.7 },
+                '100x140': { name: '100×140cm', basePrice: 55, area: 1.4 },
+                custom: { name: 'Custom', basePrice: 50, area: 1.0 }
+            },
+            materials: {
+                standard_paper: { name: 'Standard Paper', multiplier: 1.0 },
+                photo_paper: { name: 'Photo Paper', multiplier: 1.3 },
+                canvas: { name: 'Canvas', multiplier: 1.8 },
+                vinyl: { name: 'Vinyl', multiplier: 1.5 },
+                fabric: { name: 'Fabric', multiplier: 2.0 },
+                banner: { name: 'Banner Material', multiplier: 1.4 },
+                backlit: { name: 'Backlit Film', multiplier: 2.2 }
+            },
+            paperWeights: {
+                80: { name: '80 gsm', multiplier: 1.0 },
+                120: { name: '120 gsm', multiplier: 1.1 },
+                160: { name: '160 gsm', multiplier: 1.2 },
+                200: { name: '200 gsm', multiplier: 1.3 },
+                250: { name: '250 gsm', multiplier: 1.4 },
+                300: { name: '300 gsm', multiplier: 1.5 }
+            },
+            lamination: {
+                none: { name: 'None', price: 0 },
+                shiny_polymer: { name: 'Shiny Polymer', price: 15 },
+                shiny_mat: { name: 'Shiny Mat', price: 12 },
+                shiny_monomer: { name: 'Shiny Monomer', price: 18 },
+                matte: { name: 'Matte Lamination', price: 10 },
+                satin: { name: 'Satin Lamination', price: 14 },
+                anti_scratch: { name: 'Anti-Scratch', price: 20 }
+            },
+            stickerBoards: {
+                none: { name: 'None', price: 0 },
+                kapa: { name: 'Kapa Board', price: 25 },
+                forex: { name: 'Forex Board', price: 30 },
+                dibond: { name: 'Dibond', price: 45 },
+                cardboard: { name: 'Cardboard', price: 12 },
+                foam_board: { name: 'Foam Board', price: 18 },
+                acrylic: { name: 'Acrylic Board', price: 60 }
+            },
+            delivery: {
+                standard: { name: 'Standard Delivery', price: 0 },
+                express: { name: 'Express Delivery', price: 25 }
+            }
+        };
+
+        // Form elements
+        const form = document.getElementById('printingForm');
+        const resultsDiv = document.getElementById('results');
+
+        // Delivery option selection
+        function selectDelivery(type) {
+            document.querySelectorAll('.delivery-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            document.getElementById(type).checked = true;
+        }
+
+        // Initialize delivery selection
+        document.querySelector('.delivery-option').classList.add('selected');
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            calculatePrice();
+        });
+
+        function calculatePrice() {
+            const formData = new FormData(form);
+            const values = {
+                format: document.getElementById('format').value,
+                material: document.getElementById('material').value,
+                paperWeight: document.getElementById('paperWeight').value,
+                lamination: document.getElementById('lamination').value,
+                stickerBoard: document.getElementById('stickerBoard').value,
+                quantity: parseInt(document.getElementById('quantity').value) || 1,
+                variations: parseInt(document.getElementById('variations').value) || 0,
+                delivery: document.querySelector('input[name="delivery"]:checked').value
+            };
+
+            // Validate required fields
+            if (!values.format || !values.material || !values.paperWeight) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            // Calculate base price
+            const formatData = pricing.formats[values.format];
+            const materialData = pricing.materials[values.material];
+            const paperWeightData = pricing.paperWeights[values.paperWeight];
+
+            let basePrice = formatData.basePrice * materialData.multiplier * paperWeightData.multiplier;
+
+            // Add lamination cost
+            const laminationPrice = pricing.lamination[values.lamination].price;
+
+            // Add sticker board cost
+            const stickerBoardPrice = pricing.stickerBoards[values.stickerBoard].price;
+
+            // Calculate per-item price
+            let pricePerItem = basePrice + laminationPrice + stickerBoardPrice;
+
+            // Calculate variation surcharge (10% extra for variations)
+            const variationSurcharge = values.variations * pricePerItem * 0.1;
+
+            // Calculate subtotal
+            const subtotal = (pricePerItem * values.quantity) + variationSurcharge;
+
+            // Apply quantity discounts
+            let discount = 0;
+            if (values.quantity >= 100) discount = 0.15;
+            else if (values.quantity >= 50) discount = 0.10;
+            else if (values.quantity >= 20) discount = 0.05;
+
+            const discountAmount = subtotal * discount;
+            const afterDiscount = subtotal - discountAmount;
+
+            // Add delivery cost
+            const deliveryPrice = pricing.delivery[values.delivery].price;
+
+            // Calculate total
+            const total = afterDiscount + deliveryPrice;
+
+            // Display results
+            displayResults({
+                formatName: formatData.name,
+                materialName: materialData.name,
+                paperWeightName: paperWeightData.name,
+                laminationName: pricing.lamination[values.lamination].name,
+                stickerBoardName: pricing.stickerBoards[values.stickerBoard].name,
+                deliveryName: pricing.delivery[values.delivery].name,
+                basePrice,
+                laminationPrice,
+                stickerBoardPrice,
+                pricePerItem,
+                quantity: values.quantity,
+                variations: values.variations,
+                variationSurcharge,
+                subtotal,
+                discount,
+                discountAmount,
+                deliveryPrice,
+                total
+            });
+        }
+
+        function displayResults(calc) {
+            const breakdown = document.getElementById('priceBreakdown');
+            const totalAmount = document.getElementById('totalAmount');
+
+            let breakdownHTML = `
+                <div class="price-item">
+                    <span class="label">Format: ${calc.formatName}</span>
+                    <span class="value">Base rate</span>
+                </div>
+                <div class="price-item">
+                    <span class="label">Material: ${calc.materialName}</span>
+                    <span class="value">Included</span>
+                </div>
+                <div class="price-item">
+                    <span class="label">Paper Weight: ${calc.paperWeightName}</span>
+                    <span class="value">Included</span>
+                </div>
+            `;
+
+            if (calc.laminationPrice > 0) {
+                breakdownHTML += `
+                    <div class="price-item">
+                        <span class="label">Lamination: ${calc.laminationName}</span>
+                        <span class="value">$${calc.laminationPrice.toFixed(2)}</span>
+                    </div>
+                `;
+            }
+
+            if (calc.stickerBoardPrice > 0) {
+                breakdownHTML += `
+                    <div class="price-item">
+                        <span class="label">Board: ${calc.stickerBoardName}</span>
+                        <span class="value">$${calc.stickerBoardPrice.toFixed(2)}</span>
+                    </div>
+                `;
+            }
+
+            breakdownHTML += `
+                <div class="price-item">
+                    <span class="label">Price per item</span>
+                    <span class="value">$${calc.pricePerItem.toFixed(2)}</span>
+                </div>
+                <div class="price-item">
+                    <span class="label">Quantity</span>
+                    <span class="value">${calc.quantity} items</span>
+                </div>
+            `;
+
+            if (calc.variations > 0) {
+                breakdownHTML += `
+                    <div class="price-item">
+                        <span class="label">Variations (${calc.variations} items)</span>
+                        <span class="value">$${calc.variationSurcharge.toFixed(2)}</span>
+                    </div>
+                `;
+            }
+
+            breakdownHTML += `
+                <div class="price-item">
+                    <span class="label">Subtotal</span>
+                    <span class="value">$${calc.subtotal.toFixed(2)}</span>
+                </div>
+            `;
+
+            if (calc.discountAmount > 0) {
+                breakdownHTML += `
+                    <div class="price-item">
+                        <span class="label">Quantity Discount (${(calc.discount * 100).toFixed(0)}%)</span>
+                        <span class="value">-$${calc.discountAmount.toFixed(2)}</span>
+                    </div>
+                `;
+            }
+
+            if (calc.deliveryPrice > 0) {
+                breakdownHTML += `
+                    <div class="price-item">
+                        <span class="label">Delivery: ${calc.deliveryName}</span>
+                        <span class="value">$${calc.deliveryPrice.toFixed(2)}</span>
+                    </div>
+                `;
+            } else {
+                breakdownHTML += `
+                    <div class="price-item">
+                        <span class="label">Delivery: ${calc.deliveryName}</span>
+                        <span class="value">Free</span>
+                    </div>
+                `;
+            }
+
+            breakdown.innerHTML = breakdownHTML;
+            totalAmount.textContent = `$${calc.total.toFixed(2)}`;
+            resultsDiv.classList.remove('hidden');
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Auto-calculate when quantity or variations change
+        document.getElementById('quantity').addEventListener('input', function() {
+            const variations = document.getElementById('variations');
+            const maxVariations = parseInt(this.value) || 0;
+            variations.max = maxVariations;
+            if (parseInt(variations.value) > maxVariations) {
+                variations.value = maxVariations;
+            }
+        });
+    </script>
+</body>
+</html>
